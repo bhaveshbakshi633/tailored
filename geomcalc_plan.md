@@ -6,16 +6,20 @@
 3. Provide confidence metrics and size recommendations
 4. Production-ready backend
 
-## Phase 1 — Waist Engine MVP [COMPLETE]
+## Phase 1 — Waist Engine MVP [COMPLETE + VALIDATED]
 - [x] Project structure
 - [x] Mesh processing (load, clean, validate, largest component, fill holes)
 - [x] PCA alignment (Y-up, det(R)=+1, eigenvalue ratio gate)
+- [x] Post-alignment orientation check (knee vs shoulder width)
 - [x] Floor removal (2nd percentile + 5mm)
 - [x] Waist detection (80-slice search, Gaussian smooth, min circumference)
 - [x] Multi-slice averaging (7 slices, ±1cm, trimmed mean)
 - [x] Confidence scoring (cv + symmetry + density composite)
 - [x] CLI tool (waist_engine.py)
 - [x] Unit tests (37/37 passing)
+- [x] Parametric body generator with ground truth (Ramanujan)
+- [x] Integration tests (29/29 passing) — rotation + noise + variants
+- [x] Virtual validation: MAE = 0.65 cm across 6 body types
 - [x] Push to GitHub
 
 ## Phase 2 — Full Measurement Engine [SCAFFOLDED]

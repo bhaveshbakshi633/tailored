@@ -4,6 +4,20 @@ import numpy as np
 import trimesh
 
 
+def _lateral_extent_at_fraction(
+    verts: np.ndarray, frac: float, band_frac: float = 0.04,
+) -> float:
+    """Compute the X-axis extent of vertices near a given Y-fraction."""
+    y = verts[:, 1]
+    total = y.max() - y.min()
+    target = y.min() + frac * total
+    band = band_frac * total
+    mask = np.abs(y - target) < band
+    if np.sum(mask) < 3:
+        return 0.0
+    return float(np.ptp(verts[mask, 0]))
+
+
 def pca_align(mesh: trimesh.Trimesh) -> tuple[trimesh.Trimesh, dict]:
     verts = mesh.vertices.astype(np.float64)
 
@@ -30,6 +44,7 @@ def pca_align(mesh: trimesh.Trimesh) -> tuple[trimesh.Trimesh, dict]:
     e_lat = eigenvectors[:, 1].copy()
     e_sag = eigenvectors[:, 2].copy()
 
+    # Initial sign guess: narrower half = head
     proj = centered @ e_vert
     median_proj = np.median(proj)
     upper_mask = proj > median_proj
@@ -48,6 +63,16 @@ def pca_align(mesh: trimesh.Trimesh) -> tuple[trimesh.Trimesh, dict]:
 
     aligned_verts = (R @ centered.T).T
     aligned_verts[:, 1] -= aligned_verts[:, 1].min()
+
+    # Post-alignment sanity check: the shoulder region (75% height)
+    # must be wider than the knee region (25% height).  If not, the
+    # body is upside down and we flip the Y axis.
+    w_knee = _lateral_extent_at_fraction(aligned_verts, 0.25)
+    w_shoulder = _lateral_extent_at_fraction(aligned_verts, 0.75)
+
+    if w_knee > w_shoulder and w_shoulder > 0:
+        aligned_verts[:, 1] = -aligned_verts[:, 1]
+        aligned_verts[:, 1] -= aligned_verts[:, 1].min()
 
     aligned_mesh = trimesh.Trimesh(
         vertices=aligned_verts,
